@@ -18,6 +18,8 @@
   },
   "homepage": "https://github.com/JavaScript-Data-Wrangling/Chapter-9#readme",
   "dependencies": {
+    "c3-chart-maker": "0.1.15",
+    "data-forge": "0.5.6",
     "papaparse": "4.3.6"
   }
 }
