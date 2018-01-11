@@ -28,11 +28,18 @@ dataForge.readFile("./data/nyc-weather.csv")
 
         var chartDef = {
             series: {
-                "AvgTemp": "AvgTemp",
+                //"Min temp": "MinTemp",
+                //"Max temp": "MaxTemp",
+                "Avg temp": "AvgTemp",
                 "Year": "Year"
             },
             data: {
                 "x": "Year",
+            },
+            axis: {
+                y: {
+                    min: 0,
+                }
             },
             grid: {
                 x: {

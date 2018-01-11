@@ -11,16 +11,8 @@ dataForge.readFile("./data/nyc-weather-2015-2016.csv")
             .where(row => row.Year === 2016)
             .parseFloats(["MinTemp", "MaxTemp"])
             .generateSeries({
+                Date: row => row.Year.toString() + '-' + row.Month + '-' + row.Day,
                 AvgTemp: row => (row.MinTemp + row.MaxTemp) / 2,
-            })
-            .groupBy(row => row.Month)
-            .select(group => {
-                return {
-                    Month: group.first().Month,
-                    MinTemp: group.select(row => row.MinTemp).min(),
-                    MaxTemp: group.select(row => row.MaxTemp).max(),
-                    AvgTemp: group.select(row => row.AvgTemp).average()
-                };
             })
             .inflate()
             .bake();
@@ -29,15 +21,17 @@ dataForge.readFile("./data/nyc-weather-2015-2016.csv")
 
         var chartDef = {
             series: {
+                "Date": "Date",
                 "AvgTemp": "AvgTemp",
             },
             data: {
+                x: "Date",
                 type: 'bar',
             },
             axis: {
                 x: {
-                    type: 'category',
-                    categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+                    type: 'timeseries',
+                    format: '%y-%M-%d'
                 }
             },
             grid: {
@@ -53,7 +47,7 @@ dataForge.readFile("./data/nyc-weather-2015-2016.csv")
             }
         };
 
-        return c3ChartMaker(dataFrame, chartDef, "./output/nyc-monthly-temp.png");
+        return c3ChartMaker(dataFrame, chartDef, "./output/nyc-daily-temp.png");
     })
     .catch(err => {
         console.error(err);

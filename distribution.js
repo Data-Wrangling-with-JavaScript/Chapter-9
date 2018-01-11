@@ -1,6 +1,7 @@
 "use strict";
 
 var dataForge = require('data-forge');
+var c3ChartMaker = require('c3-chart-maker');
 
 function bucket (series, numCategories) { //TODO: Move this function to dataforge.
     var min = series.min();
@@ -36,6 +37,8 @@ dataForge.readFile("./data/weather-stations-2016.csv")
             .detectValues()
             .orderBy(row => row.Value);
         console.log(frequencyTable.toString());
+
+        //todo: chart
     })
     .catch(err => {
         console.error(err);

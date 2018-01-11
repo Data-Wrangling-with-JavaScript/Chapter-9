@@ -7,37 +7,40 @@ dataForge.readFile("./data/nyc-weather-2015-2016.csv")
     .parseCSV()
     .then(dataFrame => {
         dataFrame = dataFrame
-            .parseInts(["Year", "Month"])
+            .parseInts(["Year", "Month", "Day"])
             .where(row => row.Year === 2016)
-            .parseFloats(["MinTemp", "MaxTemp"])
+            .where(row => row.Month === 1)
+            .parseFloats(["MinTemp", "MaxTemp", "Precipitation", "Snowfall"])
             .generateSeries({
+                Date: row => row.Year.toString() + '-' + row.Month + '-' + row.Day,
                 AvgTemp: row => (row.MinTemp + row.MaxTemp) / 2,
             })
-            .groupBy(row => row.Month)
-            .select(group => {
-                return {
-                    Month: group.first().Month,
-                    MinTemp: group.select(row => row.MinTemp).min(),
-                    MaxTemp: group.select(row => row.MaxTemp).max(),
-                    AvgTemp: group.select(row => row.AvgTemp).average()
-                };
-            })
-            .inflate()
             .bake();
 
         console.log(dataFrame.toString());
 
         var chartDef = {
             series: {
-                "AvgTemp": "AvgTemp",
+                "Date": "Date",
+                "Average temperature": "AvgTemp",
+                "Rain": "Precipitation",
+                "Snow": "Snowfall",
             },
             data: {
+                x: "Date",
                 type: 'bar',
+                axes: {
+                    "Rain": 'y2',
+                    "Snow": 'y2'
+                }
             },
             axis: {
                 x: {
-                    type: 'category',
-                    categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+                    type: 'timeseries',
+                    format: '%y-%M-%d'
+                },
+                y2: {
+                    show: true
                 }
             },
             grid: {
@@ -46,6 +49,9 @@ dataForge.readFile("./data/nyc-weather-2015-2016.csv")
                 },
                 y: {
                     show: true
+                },
+                y2: {
+                    show: true
                 }
             },
             point: {
@@ -53,7 +59,7 @@ dataForge.readFile("./data/nyc-weather-2015-2016.csv")
             }
         };
 
-        return c3ChartMaker(dataFrame, chartDef, "./output/nyc-monthly-temp.png");
+        return c3ChartMaker(dataFrame, chartDef, "./output/nyc-daily-jan.png");
     })
     .catch(err => {
         console.error(err);
