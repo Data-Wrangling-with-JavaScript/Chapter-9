@@ -34,8 +34,8 @@ dataForge.readFile("./data/nyc-weather.csv")
             .bake();
 
         const regressionInput = dataFrame
-            .where(row => row.AvgTemp !== undefined)
-            .deflate(row => [row.Year, row.AvgTemp])
+            .where(row => row.MaxTemp !== undefined)
+            .deflate(row => [row.Year, row.MaxTemp])
             .toArray();
 
         const regression = simpleStatistics.linearRegression(regressionInput);
@@ -73,14 +73,14 @@ dataForge.readFile("./data/nyc-weather.csv")
             series: {
                 //"Min temp": "MinTemp",
                 //"Max temp": "MaxTemp",
-                "Avg temp": "AvgTemp",
+                "Max temp": "MaxTemp",
                 "Forecasted temp": "Forecast",
                 "x1": "Year",
                 "x2": "ForecastYear",
             },
             data: {
                 xs: { // NO EASY WAY TO DRAW A TREND LINE ON C3, JUST A SEPARATE SERIES AND X AXIS.
-                    "Avg temp": "x1",
+                    "Max temp": "x1",
                     "Forecasted temp": "x2",
                 }
             },
