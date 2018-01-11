@@ -3,7 +3,7 @@
 var dataForge = require('data-forge');
 var c3ChartMaker = require('c3-chart-maker');
 
-dataForge.readFile("./data/weather-stations.csv")
+dataForge.readFile("./data/nyc-weather.csv")
     .parseCSV()
     .then(dataFrame => {
         dataFrame = dataFrame
@@ -47,7 +47,7 @@ dataForge.readFile("./data/weather-stations.csv")
             }
         };
 
-        return c3ChartMaker(dataFrame, chartDef, "./output/yearly-trend.png");
+        return c3ChartMaker(dataFrame, chartDef, "./output/nyc-yearly-trend.png");
     })
     .catch(err => {
         console.error(err);
