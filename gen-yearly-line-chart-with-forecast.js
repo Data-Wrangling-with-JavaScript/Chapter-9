@@ -9,6 +9,7 @@ dataForge.readFile("./data/nyc-weather.csv")
     .then(dataFrame => {
         dataFrame = dataFrame
             .parseInts(["Year"])
+            .where(row => row.Year >= 1917)
             .parseFloats(["MinTemp", "MaxTemp"])
             .generateSeries({
                 AvgTemp: row => (row.MinTemp + row.MaxTemp) / 2,
@@ -43,21 +44,21 @@ dataForge.readFile("./data/nyc-weather.csv")
         dataFrame = dataFrame.withSeries({
                 ForecastYear: new dataForge.Series({ //todo: Workaround for C3 issue???!
                     values: [
-                        1869,
+                        1917,
                         2100
                     ],
                     index: [
-                        1869,
+                        1917,
                         2100
                     ]
                 }),
                 Forecast: new dataForge.Series({
                     values: [
-                        forecaster(1869),
+                        forecaster(1917),
                         forecaster(2100)
                     ],
                     index: [
-                        1869,
+                        1917,
                         2100
                     ]
                 })
