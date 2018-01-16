@@ -83,6 +83,46 @@ function renderLineChart (dataFrame, xAxisFieldNames, yAxisFieldNames, renderedC
 };
 
 //
+// Render a generic nar chart.
+//
+function renderBarChart (fieldName, dataFrame, categories, chartFileName) {
+
+    const series = {};
+    series[fieldName] = fieldName;
+
+    const chartDef = {
+        size: {
+            height: 600,
+            width: 1000,
+        },            
+        series: series,
+        data: {
+            type: 'bar',
+        },
+        axis: {
+            x: {
+                type: "category",
+                categories: categories,
+                tick: {
+                    culling: false,
+                },
+            },
+        },
+        bar: {
+            width: {
+                ratio: 0.9
+            }
+        }
+    };
+
+    return c3ChartMaker(
+        dataFrame, 
+        chartDef, 
+        chartFileName
+    );
+}
+
+//
 // Render a simple monthly bar chart.
 //
 function renderMonthlyBarChart (dataFrame, fieldName, renderedChartFilePath) {
@@ -123,5 +163,6 @@ function renderMonthlyBarChart (dataFrame, fieldName, renderedChartFilePath) {
 module.exports = {
     renderDailyLineChart: renderDailyLineChart,
     renderLineChart: renderLineChart,
+    renderBarChart: renderBarChart,
     renderMonthlyBarChart: renderMonthlyBarChart
 };
