@@ -1,39 +1,34 @@
 "use strict";
 
-const importCsvFile = require('./toolkit/importCsvFile');
+const dataForge = require('data-forge');
+const renderMonthlyBarChart = require('./toolkit/charts.js').renderMonthlyBarChart;
 
-const inputFilePath = "./data/nyc-monthly-weather-2016.csv";
+dataForge.readFile("./data/nyc-weather.csv")
+    .parseCSV()
+    .then(dataFrame => {
+        dataFrame = dataFrame
+            .parseInts("Year") // Parse the Year column.
+            .where(row => row.Year === 2016) // Extract records only for 2016.
+            .parseFloats(["MinTemp", "MaxTemp"]) // Parse more columns we are interested in.
+            .generateSeries({ // Generate average daily temperature.
+                AvgTemp: row => (row.MinTemp + row.MaxTemp) / 2,
+            })
+            .parseInts("Month") // Parse the Month column.
+            .groupBy(row => row.Month) // Group our data by month.
+            .select(group => { // For each month group generate a new record that summarizes the month.
+                return {
+                    Month: group.first().Month,
+                    MinTemp: group.select(row => row.MinTemp).min(), // Extract 'MinTemp' values for the month.
+                    MaxTemp: group.select(row => row.MaxTemp).max(), // Extract 'MaxTemp' values for the month.
+                    AvgTemp: group.select(row => row.AvgTemp).average() // Compute the average temperature for the month.
+                };
+            })
+            .inflate(); // Convert back to a DataFrame, because groupBy returns a series.
 
-//
-// Get the sum of values.
-//
-function sum (values) {
-    return values.reduce((prev, cur) => prev + cur, 0);
-}
+        console.log(dataFrame.toString()); // Print our data to the console to double check it.
 
-//
-// Get the average of values.
-//
-function average (values) {
-    return sum(values) / values.length;
-}
-
-function std (values) {
-    const avg = average(values); // Compute the average of the values.
-    const squaredDiffsFromAvg = values // Compute the shared difference from the average for each value.
-        .map(v => v - avg)
-        .map(v => v * v);
-    const avgDiff = average(squaredDiffsFromAvg); // Average the squared differences.
-    return Math.sqrt(avgDiff); // Take the square root and we have our standard deviation.
-}
-
-importCsvFile(inputFilePath)
-    .then(data => {
-        const monthlyRainfall = data.map(row => row.TotalRain); // Extract 'TotalRain' values.
-        const monthlyRainfallStdDeviation = std(monthlyRainfall); // Compute the standard deviation of monthly rainfall for 2016.
-        console.log("Daily rainfall standard deviation: " + monthlyRainfallStdDeviation + "mm");
+        return renderMonthlyBarChart(dataFrame, "AvgTemp", "./output/nyc-monthly-weather.png"); // Render the NYC monthly weather chart.
     })
     .catch(err => {
         console.error(err);
     });
-

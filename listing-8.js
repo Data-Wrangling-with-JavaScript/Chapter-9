@@ -1,65 +1,60 @@
 "use strict";
 
 const dataForge = require('data-forge');
-const simpleStatistics = require('simple-statistics');
 const renderLineChart = require('./toolkit/charts.js').renderLineChart;
+
+//
+// Summarize our data by year.
+//
+function summarizeByYear (dataFrame) {
+    return dataFrame
+        .parseInts(["Year"])
+        .parseFloats(["MinTemp", "MaxTemp"])
+        .generateSeries({
+            AvgTemp: row => (row.MinTemp + row.MaxTemp) / 2, // Generate daily average temperature.
+        })
+        .groupBy(row => row.Year) // Group by year and summarize.
+        .select(group => {
+            return {
+                Year: group.first().Year,
+                AvgTemp: group.select(row => row.AvgTemp).average()
+            };
+        })
+        .inflate(); // Convert to a dataframe, because groupBy returns a series.
+};
 
 dataForge.readFile("./data/nyc-weather.csv")
     .parseCSV()
     .then(dataFrame => {
-        dataFrame = dataFrame
-            .parseInts(["Year"])
-            .parseFloats(["MinTemp", "MaxTemp"])
-            .generateSeries({
-                AvgTemp: row => (row.MinTemp + row.MaxTemp) / 2, // Generate daily average temperature.
-            })
-            .groupBy(row => row.Year) // Group by year and summarize.
-            .select(group => {
-                return {
-                    Year: group.first().Year,
-                    AvgTemp: group.select(row => row.AvgTemp).average()
-                };
-            })
-            .concat(new dataForge.Series([ // Add in a stub record for forecasted year, we will soon populate this with a forecasted value.
-                {
-                    Year: 2100
-                }
-            ]))
-            .inflate(); // Convert to a dataframe, because groupBy returns a series.
+        dataFrame = summarizeByYear(dataFrame)
+            .setIndex("Year") // We need to set an index so that we can reintegrate the moving average series.
+            .withSeries("TempMovingAvg", dataFrame => { // Generate a moving average series.
+                return dataFrame
+                    .getSeries("AvgTemp") // The moving average is based on the 'AvgTemp' field.
+                    .rollingWindow(20) // We are averaging over 20 years.
+                    .asPairs() //TODO: This is kind of complicated. Is there a simpler way I can 'generate a moving average' directly into the dataframe?
+                    .select(pair => {
+                        var window = pair[1];
+                        return [
+                            window.getIndex().last(), // Return the last index from the 20 year period, this allows the new series to correctly line up with records in the dataframe.
+                            window.average() // Compute the average of the 20 year period.
+                        ];                
+                    })
+                    .asValues()
 
-        const regressionInput = dataFrame // Generate input to the linear regression.
-            .where(row => row.AvgTemp !== undefined)
-            .deflate(row => [row.Year, row.AvgTemp]) // This data is formatted as an array of x,y values.
-            .toArray();
-
-        const regression = simpleStatistics.linearRegression(regressionInput); // Create the linear regression.
-        const forecaster = simpleStatistics.linearRegressionLine(regression); // Create a forecaster that can predict future values for us.
-
-        dataFrame = dataFrame.withSeries({
-                ForecastYear: new dataForge.Series({ // Create a separate series for the X axis of the forecast.
-                    values: [
-                        1917,
-                        2100
-                    ],
-                    index: [
-                        1917,
-                        2100
-                    ]
-                }),
-                Forecast: new dataForge.Series({ // Create a series for the forecast values.
-                    values: [
-                        forecaster(1917), // Forecast for 1917 and 2100.
-                        forecaster(2100)
-                    ],
-                    index: [
-                        1917,
-                        2100
-                    ]
-                })
+                    /* Would this work: 
+                    .rollingWindow(30, window => {
+                        return [
+                            window.getIndex().last(),
+                            window.average()
+                        ];                
+                    })
+                    */
             });
-            
-        return renderLineChart(dataFrame, ["Year", "ForecastYear"], ["AvgTemp", "Forecast"], "./output/nyc-year-trend-with-forecast.png")
+
+        return renderLineChart(dataFrame, ["Year"], ["TempMovingAvg"], "./output/nyc-yearly-rolling-average.png")
     })
     .catch(err => {
         console.error(err);
     });
+    

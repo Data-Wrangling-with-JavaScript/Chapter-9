@@ -1,23 +1,33 @@
 "use strict";
 
-const importCsvFile = require('./toolkit/importCsvFile');
-
-const inputFilePath = "./data/nyc-monthly-weather-2016.csv";
+var monthlyRainfall = [ // Keep things simple with some hard coded data.
+    112.1,
+    112,
+    29.8,
+    41.1,
+    95.4,
+    66,
+    178.3,
+    50.2,
+    71,
+    105.4,
+    137.5,
+    73.4
+];
 
 //
-// Get the sum of values.
+// Compute the sum of the set of values.
 //
 function sum (values) {
-    return values.reduce((prev, cur) => prev + cur, 0); // Use the JavaScript reduce function to compute the sum from a set of values.
+    return values.reduce((prev, cur) => prev + cur, 0);
 }
 
-importCsvFile(inputFilePath)
-    .then(data => {
-        const monthlyRainfall = data.map(row => row.TotalRain); // Extract 'TotalRain' values.
-        const yearlyRainfall = sum(monthlyRainfall); // Compute the total sum of rainfall for 2016.
-        console.log("Total rainfall for the year: " + yearlyRainfall + "mm");
-    })
-    .catch(err => {
-        console.error(err);
-    });
+//
+// Compute the average of a set of values.
+//
+function average (values) {
+    return sum(values) / values.length; // Divide the sum of values by the amount of values.
+}
 
+const averageMonthlyRainfall = average(monthlyRainfall); // Compute the average monthly rainfall for 2016.
+console.log("Average monthly rainfall: " + averageMonthlyRainfall + "mm");

@@ -2,45 +2,6 @@
 
 const c3ChartMaker = require('c3-chart-maker');
 
-// 
-// Render a simple daily line chart.
-//
-function renderDailyLineChart (dataFrame, xAxisFieldName, yAxisFieldName, renderedChartFilePath) {
-    var series = {};
-    series[xAxisFieldName] = xAxisFieldName;
-    series[yAxisFieldName] = yAxisFieldName;
-    var chartDef = {
-        series: series,
-        data: {
-            "x": xAxisFieldName
-        },
-        axis: {
-            x: {
-                type: "timeseries",
-                tick: {
-                    format: "%Y-%m-%d"
-                }
-            }
-        },
-        grid: {
-            x: {
-                show: true
-            },
-            y: {
-                show: true
-            }
-        },
-        point: {
-            show: false   
-        },
-        transition: {
-            duration: 0
-        }
-    };
-
-    return c3ChartMaker(dataFrame, chartDef, renderedChartFilePath);
-};
-
 //
 // Render a simple line chart.
 //
@@ -83,7 +44,7 @@ function renderLineChart (dataFrame, xAxisFieldNames, yAxisFieldNames, renderedC
 };
 
 //
-// Render a generic nar chart.
+// Render a generic bar chart.
 //
 function renderBarChart (fieldName, dataFrame, categories, chartFileName) {
 
@@ -161,7 +122,6 @@ function renderMonthlyBarChart (dataFrame, fieldName, renderedChartFilePath) {
 
 
 module.exports = {
-    renderDailyLineChart: renderDailyLineChart,
     renderLineChart: renderLineChart,
     renderBarChart: renderBarChart,
     renderMonthlyBarChart: renderMonthlyBarChart
