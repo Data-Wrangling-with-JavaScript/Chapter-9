@@ -1,35 +1,33 @@
 "use strict";
 
 const dataForge = require('data-forge');
-const renderLineChart = require('./toolkit/charts.js').renderLineChart;
+const renderMonthlyBarChart = require('./toolkit/charts.js').renderMonthlyBarChart; // Let's assume we already create functions to render charts, I'll show you how to do this in chapters 10 and 11.
+const average = require('./toolkit/statistics.js').average; // Reuse the average function we created earlier.
 
-//
-// Summarize our data by year.
-//
-function summarizeByYear (dataFrame) {
-    return dataFrame
-        .parseInts(["Year"])
-        .parseFloats(["MinTemp", "MaxTemp"])
-        .generateSeries({
-            AvgTemp: row => (row.MinTemp + row.MaxTemp) / 2, // Generate daily average temperature.
-        })
-        .groupBy(row => row.Year) // Group by year and summarize.
-        .select(group => {
-            return {
-                Year: group.first().Year,
-                AvgTemp: group.select(row => row.AvgTemp).average()
-            };
-        })
-        .inflate(); // Convert to a dataframe, because groupBy returns a series.
-};
-
-dataForge.readFile("./data/nyc-weather.csv")
+const dataFrame = dataForge
+    .readFileSync("./data/nyc-weather.csv") // I'm using syncrhonous file reading to make the code easier to read, in practice you will probably need to use the async version.
     .parseCSV()
-    .then(dataFrame => {
-        dataFrame = summarizeByYear(dataFrame);
-
-        return renderLineChart(dataFrame, ["Year"], ["AvgTemp"], "./output/nyc-year-trend.png")
+    .parseInts("Year") // Parse the Year column.
+    .where(row => row.Year === 2016) // Extract records only for 2016.
+    .parseFloats(["MinTemp", "MaxTemp"]) // Parse more columns we are interested in.
+    .generateSeries({ // Generate average daily temperature.
+        AvgTemp: row => (row.MinTemp + row.MaxTemp) / 2,
     })
-    .catch(err => {
+    .parseInts("Month") // Parse the Month column.
+    .groupBy(row => row.Month) // Group our data by month.
+    .select(group => { // For each month group generate a new record that summarizes the month.
+        return {
+            Month: group.first().Month,
+            MinTemp: group.select(row => row.MinTemp).min(), // Extract 'MinTemp' values for the month and get the minimum.
+            MaxTemp: group.select(row => row.MaxTemp).max(), // Extract 'MaxTemp' values for the month and get the maximum.
+            AvgTemp: average(group.select(row => row.AvgTemp).toArray()) // Compute the average temperature for the month.
+        };
+    })
+    .inflate(); // Convert back to a DataFrame, because groupBy returns a series.
+
+console.log(dataFrame.toString()); // Print our data to the console to double check it.
+
+renderMonthlyBarChart(dataFrame, "AvgTemp", "./output/nyc-monthly-weather.png") // Render the NYC monthly weather chart.
+    .catch(err => { // Chart rendering is asynchronous.
         console.error(err);
     });

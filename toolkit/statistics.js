@@ -1,25 +1,14 @@
 "use strict";
 
-var monthlyRainfall = [ // Keep things simple with some hard coded data.
-    112.1,
-    112,
-    29.8,
-    41.1,
-    95.4,
-    66,
-    178.3,
-    50.2,
-    71,
-    105.4,
-    137.5,
-    73.4
-];
+//
+// Various statistics functions.
+//
 
 //
 // Compute the sum of the set of values.
 //
 function sum (values) {
-    return values.reduce((prev, cur) => prev + cur, 0);
+    return values.reduce((prev, cur) => prev + cur, 0); // Use the JavaScript reduce function to compute the sum from a set of values.
 }
 
 //
@@ -41,5 +30,8 @@ function std (values) {
     return Math.sqrt(avgDiff); // Take the square root and we have our standard deviation.
 }
 
-const monthlyRainfallStdDeviation = std(monthlyRainfall); // Compute the standard deviation of monthly rainfall for 2016.
-console.log("Daily rainfall standard deviation: " + monthlyRainfallStdDeviation + "mm");
+module.exports = {
+    sum: sum,
+    average: average,
+    std: std,
+};

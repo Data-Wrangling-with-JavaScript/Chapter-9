@@ -26,7 +26,7 @@ function renderLineChart (dataFrame, xAxisFieldNames, yAxisFieldNames, renderedC
         },
         grid: {
             x: {
-                show: true
+                show: true  
             },
             y: {
                 show: true

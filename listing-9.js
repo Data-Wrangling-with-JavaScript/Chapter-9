@@ -1,86 +1,80 @@
 "use strict";
 
 const dataForge = require('data-forge');
-const renderLineChart = require('./toolkit/charts.js').renderLineChart;
+const renderBarChart = require('./toolkit/charts.js').renderBarChart;
 
-//
-// Summarize our data by year.
-//
-function summarizeByYear (dataFrame) {
-    return dataFrame
-        .parseInts(["Year"])
-        .parseFloats(["MinTemp", "MaxTemp"])
-        .generateSeries({
-            AvgTemp: row => (row.MinTemp + row.MaxTemp) / 2, // Generate daily average temperature.
-        })
-        .groupBy(row => row.Year) // Group by year and summarize.
-        .select(group => {
+function bucket (series, numCategories) { //TODO: Move this function to dataforge.
+    const min = series.min();
+    const max = series.max();
+    const range = max - min;
+    const width = range / (numCategories-1);
+    return series
+        .select(v => {
+            const bucket = Math.floor((v - min) / width);
+            const bucketMin = (bucket * width) + min;
             return {
-                Year: group.first().Year,
-                AvgTemp: group.select(row => row.AvgTemp).average()
+                Value: v,
+                Bucket: bucket,
+                Min: bucketMin,
+                Mid: bucketMin + (width*0.5),
+                Max: bucketMin + width,
             };
         })
-        .inflate(); // Convert to a dataframe, because groupBy returns a series.
+        .inflate()
+        .bake();
 };
 
 //
-// Compute the sum of the set of values.
+// Our function to create a distribution from a series and render a histogram from it.
 //
-function sum (values) {
-    return values.reduce((prev, cur) => prev + cur, 0);
-}
+function createDistribution (series, chartFileName) {
+    const bucketed = bucket(series, 20); // Sort the series into 20 evenly spaced buckets (or bins).
+    const frequencyTable = bucketed
+        .deflate(r => r.Mid) // Extract the mid-point of each bin to a new series.
+        .detectValues() // Determine the frequency of values in the new series.
+        .orderBy(row => row.Value); // Order by ascending bin value, this is the correct order for rendering the histogram.
+    console.log(frequencyTable.toString()); // Print to console so we can double check.
 
-//
-// Compute the average of a set of values.
-//
-function average (values) {
-    return sum(values) / values.length; // Divide the sum of values by the amount of values.
-}
+    frequencyTable // Output to CSV file so we can double check.
+        .transformSeries({
+            Value: v => v.toFixed(2),
+            Frequency: v => v.toFixed(2),
+        })
+        .asCSV()
+        .writeFileSync("./output/frequency-table.csv"); //fio:
 
-//
-// Compute the standard deviation of a set of values.
-//
-function std (values) {
-    const avg = average(values); // Compute the average of the values.
-    const squaredDiffsFromAvg = values // Compute the shared difference from the average for each value.
-        .map(v => v - avg)
-        .map(v => v * v);
-    const avgDiff = average(squaredDiffsFromAvg); // Average the squared differences.
-    return Math.sqrt(avgDiff); // Take the square root and we have our standard deviation.
-}
+    const categories = frequencyTable
+        .deflate(r => r.Value.toFixed(2)) // Format x axis labels for display in the histogram.
+        .toArray();
+    
+    return renderBarChart("Frequency", frequencyTable, categories, chartFileName); // Render the histogram.
+};
 
-dataForge.readFile("./data/nyc-weather.csv")
+function isWinter (monthNo) { // Determine if the requested month is a winter month.
+    return monthNo === 1 ||
+        monthNo === 2 ||
+        monthNo === 12;
+};
+
+const dataFrame = dataForge.readFileSync("./data/nyc-weather.csv")
     .parseCSV()
-    .then(dataFrame => {
-        dataFrame = summarizeByYear(dataFrame)
-            .setIndex("Year") // We need to set an index so that we can reintegrate the moving average series.
-            .withSeries("TempStdDev", dataFrame => { // Generate a moving average series.
-                return dataFrame
-                    .getSeries("AvgTemp") // The moving average is based on the 'AvgTemp' field.
-                    .rollingWindow(20) // We are averaging over 20 years.
-                    .asPairs() //TODO: This is kind of complicated. Is there a simpler way I can 'generate a moving average' directly into the dataframe?
-                    .select(pair => {
-                        var window = pair[1];
-                        return [
-                            window.getIndex().last(), // Return the last index from the 20 year period, this allows the new series to correctly line up with records in the dataframe.
-                            std(window.toArray()) // Compute the standard deviation of the 20 year period.
-                        ];                
-                    })
-                    .asValues()
+    .parseInts("Month")
+    .parseFloats(["MinTemp", "MaxTemp"])
+    .generateSeries({
+        AvgTemp: row => (row.MinTemp + row.MaxTemp) / 2
+    });
 
-                    /* Would this work: 
-                    .rollingWindow(30, window => {
-                        return [
-                            window.getIndex().last(),
-                            window.average()
-                        ];                
-                    })
-                    */
-            });
+console.log("Winter temperature distribution:");
+const winterTemperatures = dataFrame
+    .where(row => isWinter(row.Month)) // To create the full distribution, simply omit this filter.
+    .getSeries("AvgTemp");
 
-        return renderLineChart(dataFrame, ["Year"], ["TempStdDev"], "./output/nyc-yearly-rolling-std-dev.png")
-    })
+    //fio:
+console.log('average: ' + winterTemperatures.average());
+const stats = require('./toolkit/statistics');
+console.log('std: ' + stats.std(winterTemperatures.toArray()));
+
+createDistribution(winterTemperatures, "./output/nyc-winter-temperature-distribution.png")
     .catch(err => {
         console.error(err);
     });
-    
