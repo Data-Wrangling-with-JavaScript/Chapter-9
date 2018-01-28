@@ -29,11 +29,16 @@ function bucket (series, numCategories) { //TODO: Move this function to dataforg
 //
 function createDistribution (series, chartFileName) {
     const bucketed = bucket(series, 20); // Sort the series into 20 evenly spaced buckets (or bins).
+    console.log(bucketed
+        .tail(100)
+        .orderBy(row => row.Value)
+        .toString()
+    ); //fio:
     const frequencyTable = bucketed
         .deflate(r => r.Mid) // Extract the mid-point of each bin to a new series.
         .detectValues() // Determine the frequency of values in the new series.
         .orderBy(row => row.Value); // Order by ascending bin value, this is the correct order for rendering the histogram.
-    console.log(frequencyTable.toString()); // Print to console so we can double check.
+    //console.log(frequencyTable.toString()); // Print to console so we can double check.
 
     frequencyTable // Output to CSV file so we can double check.
         .transformSeries({
@@ -41,7 +46,7 @@ function createDistribution (series, chartFileName) {
             Frequency: v => v.toFixed(2),
         })
         .asCSV()
-        .writeFileSync("./output/frequency-table.csv"); //fio:
+        .writeFileSync("./output/frequency-table.csv");
 
     const categories = frequencyTable
         .deflate(r => r.Value.toFixed(2)) // Format x axis labels for display in the histogram.
@@ -66,7 +71,7 @@ const dataFrame = dataForge.readFileSync("./data/nyc-weather.csv")
 
 console.log("Winter temperature distribution:");
 const winterTemperatures = dataFrame
-    .where(row => isWinter(row.Month)) // To create the full distribution, simply omit this filter.
+    //todo:.where(row => isWinter(row.Month)) // To create the full distribution, simply omit this filter.
     .getSeries("AvgTemp");
 
     //fio:
