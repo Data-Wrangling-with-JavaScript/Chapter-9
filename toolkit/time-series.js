@@ -12,25 +12,12 @@ const dataForge = require('data-forge');
 
 function rollingAverage (series, period) { // Compute the rolling average for a time series.
     return series
-        .rollingWindow(period) // Select the period of the average.
-        .asPairs() //TODO: This is kind of complicated. Is there a simpler way I can 'generate a moving average' directly into the dataframe?
-        .select(pair => {
-            var window = pair[1];
+        .rollingWindow(period, window => { // Select the period of the average.
             return [
                 window.getIndex().last(), // Return the last index from the period, this allows the new series to correctly line up with records in the dataframe.
                 average(window.toArray()) // Compute the average for the time period.
             ];                
-        })
-        .asValues();
-
-    /* Would this work: 
-    .rollingWindow(30, window => {
-        return [
-            window.getIndex().last(),
-            window.average()
-        ];                
-    })
-    */
+        });
 };
 
 function linearRegression (series, forecastIndexA, forecastIndexB) { // Compute a linear regression for a series and use it to produce a forecast.

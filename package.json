@@ -20,7 +20,7 @@
   "dependencies": {
     "c3-chart-maker": "0.1.15",
     "chai": "4.1.2",
-    "data-forge": "0.5.6",
+    "data-forge": "0.5.7",
     "papaparse": "4.3.6",
     "simple-statistics": "5.2.1"
   }
