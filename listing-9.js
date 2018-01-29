@@ -3,37 +3,11 @@
 const dataForge = require('data-forge');
 const renderBarChart = require('./toolkit/charts.js').renderBarChart;
 
-function bucket (series, numCategories) { //TODO: Move this function to dataforge.
-    const min = series.min();
-    const max = series.max();
-    const range = max - min;
-    const width = range / (numCategories-1);
-    return series
-        .select(v => {
-            const bucket = Math.floor((v - min) / width);
-            const bucketMin = (bucket * width) + min;
-            return {
-                Value: v,
-                Bucket: bucket,
-                Min: bucketMin,
-                Mid: bucketMin + (width*0.5),
-                Max: bucketMin + width,
-            };
-        })
-        .inflate()
-        .bake();
-};
-
 //
 // Our function to create a distribution from a series and render a histogram from it.
 //
 function createDistribution (series, chartFileName) {
-    const bucketed = bucket(series, 20); // Sort the series into 20 evenly spaced buckets (or bins).
-    console.log(bucketed
-        .tail(100)
-        .orderBy(row => row.Value)
-        .toString()
-    ); //fio:
+    const bucketed = series.bucket(20); // Sort the series into 20 evenly spaced buckets (or bins).
     const frequencyTable = bucketed
         .deflate(r => r.Mid) // Extract the mid-point of each bin to a new series.
         .detectValues() // Determine the frequency of values in the new series.
@@ -69,15 +43,9 @@ const dataFrame = dataForge.readFileSync("./data/nyc-weather.csv")
         AvgTemp: row => (row.MinTemp + row.MaxTemp) / 2
     });
 
-console.log("Winter temperature distribution:");
 const winterTemperatures = dataFrame
-    //todo:.where(row => isWinter(row.Month)) // To create the full distribution, simply omit this filter.
+    .where(row => isWinter(row.Month)) // To create the full distribution, simply omit this filter.
     .getSeries("AvgTemp");
-
-    //fio:
-console.log('average: ' + winterTemperatures.average());
-const stats = require('./toolkit/statistics');
-console.log('std: ' + stats.std(winterTemperatures.toArray()));
 
 createDistribution(winterTemperatures, "./output/nyc-winter-temperature-distribution.png")
     .catch(err => {
