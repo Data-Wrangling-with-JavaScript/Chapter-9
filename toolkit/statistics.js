@@ -24,8 +24,7 @@ function average (values) {
 function std (values) {
     const avg = average(values); // Compute the average of the values.
     const squaredDiffsFromAvg = values // Compute the shared difference from the average for each value.
-        .map(v => v - avg)
-        .map(v => v * v);
+        .map(v => Math.pow(v - avg, 2));
     const avgDiff = average(squaredDiffsFromAvg); // Average the squared differences.
     return Math.sqrt(avgDiff); // Take the square root and we have our standard deviation.
 }
