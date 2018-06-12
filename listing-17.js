@@ -49,7 +49,7 @@ laWeather = summarizeByYear(laWeather)
 nycWeather = standardize(nycWeather, "AvgTemp"); // Standardize NYC temperature data.
 laWeather = standardize(laWeather, "AvgTemp"); // Standardize LA temperature data.
 
-var combinedWeather = laWeather
+const combinedWeather = laWeather
     .renameSeries({
         AvgTemp: "TempLA",
     })

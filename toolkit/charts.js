@@ -6,14 +6,14 @@ const c3ChartMaker = require('c3-chart-maker');
 // Render a simple line chart.
 //
 function renderLineChart (dataFrame, xAxisFieldNames, yAxisFieldNames, renderedChartFilePath) {
-    var series = {};
-    var xs = {};
+    const series = {};
+    const xs = {};
     
     for (let fieldName of xAxisFieldNames) {
         series[fieldName] = fieldName;
     }
     
-    var xIndex = 0;
+    const xIndex = 0;
     for (let fieldName of yAxisFieldNames) {
         series[fieldName] = fieldName;
         xs[fieldName] = xAxisFieldNames[xIndex++];
@@ -87,10 +87,10 @@ function renderBarChart (fieldName, dataFrame, categories, chartFileName) {
 // Render a simple monthly bar chart.
 //
 function renderMonthlyBarChart (dataFrame, fieldName, renderedChartFilePath) {
-    var series = {};
+    const series = {};
     series[fieldName] = fieldName;
 
-    var chartDef = {
+    const chartDef = {
         series: series,
         data: {
             type: "bar",

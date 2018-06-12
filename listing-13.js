@@ -30,7 +30,7 @@ let dataFrame = dataForge.readFileSync("./data/nyc-weather.csv")
 dataFrame = summarizeByYear(dataFrame)
     .setIndex("Year") // We need to set an index so that we can reintegrate the moving average series.
     .withSeries("TempMovingAvg", dataFrame => { // Generate a moving average series.
-        var temperatureSeries = dataFrame.getSeries("AvgTemp"); // Extract the time series form the dataframe.
+        const temperatureSeries = dataFrame.getSeries("AvgTemp"); // Extract the time series form the dataframe.
         return rollingAverage(temperatureSeries, 20) // Compute 20 year rolling average of temperature.
     });
 
