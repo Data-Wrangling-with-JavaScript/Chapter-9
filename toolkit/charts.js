@@ -13,7 +13,7 @@ function renderLineChart (dataFrame, xAxisFieldNames, yAxisFieldNames, renderedC
         series[fieldName] = fieldName;
     }
     
-    const xIndex = 0;
+    let xIndex = 0;
     for (let fieldName of yAxisFieldNames) {
         series[fieldName] = fieldName;
         xs[fieldName] = xAxisFieldNames[xIndex++];
