@@ -58,7 +58,7 @@ function renderBarChart (fieldName, dataFrame, categories, chartFileName) {
         },            
         series: series,
         data: {
-            type: 'bar',
+            type: "bar",
         },
         axis: {
             x: {

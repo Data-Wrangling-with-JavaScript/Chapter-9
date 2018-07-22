@@ -2,6 +2,7 @@
 
 const dataForge = require('data-forge');
 const renderLineChart = require('./toolkit/charts.js').renderLineChart;
+const average = require('./toolkit/statistics.js').average;
 const rollingAverage = require('./toolkit/time-series.js').rollingAverage;
 
 //
@@ -18,7 +19,7 @@ function summarizeByYear (dataFrame) {
         .select(group => {
             return {
                 Year: group.first().Year,
-                AvgTemp: group.select(row => row.AvgTemp).average()
+                AvgTemp: average(group.select(row => row.AvgTemp).toArray())
             };
         })
         .inflate(); // Convert to a dataframe, because groupBy returns a series.

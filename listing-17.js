@@ -1,66 +1,31 @@
 "use strict";
 
 const dataForge = require('data-forge');
-const renderLineChart = require('./toolkit/charts.js').renderLineChart;
-const statistics = require('./toolkit/statistics.js');
-const average = statistics.average;
-const std = statistics.std;
+const simpleStatistics = require('simple-statistics');
 
-//
-// Summarize our data by year.
-//
-function summarizeByYear (dataFrame) {
-    return dataFrame
-        .parseInts(["Year"])
-        .parseFloats(["MinTemp", "MaxTemp"])
-        .generateSeries({
-            AvgTemp: row => (row.MinTemp + row.MaxTemp) / 2, // Generate daily average temperature.
-        })
-        .groupBy(row => row.Year) // Group by year and summarize.
-        .select(group => {
-            return {
-                Year: group.first().Year,
-                AvgTemp: group.select(row => row.AvgTemp).average()
-            };
-        })
-        .inflate(); // Convert to a dataframe, because groupBy returns a series.
-};
-
-//
-// Standardize a data set for comparison against other data sets.
-//
-function standardize (dataFrame, seriesName) {
-    const series = dataFrame.getSeries(seriesName);
-    const values = series.toArray();
-    const avg = average(values);
-    const standardDeviation = std(values);
-    const standardizedSeries = series.select(value => (value - avg) / standardDeviation); // Transform the series so that each value is 'standard deviations from the mean'.
-    return dataFrame.withSeries(seriesName, standardizedSeries);
-};
-
-let nycWeather = dataForge.readFileSync("./data/nyc-weather.csv").parseCSV();
-let laWeather = dataForge.readFileSync("./data/la-weather.csv").parseCSV();
-
-nycWeather = summarizeByYear(nycWeather)
-            .setIndex("Year");
-laWeather = summarizeByYear(laWeather)
-            .setIndex("Year");
-
-nycWeather = standardize(nycWeather, "AvgTemp"); // Standardize NYC temperature data.
-laWeather = standardize(laWeather, "AvgTemp"); // Standardize LA temperature data.
-
-const combinedWeather = laWeather
-    .renameSeries({
-        AvgTemp: "TempLA",
+let dataFrame = dataForge.readFileSync("./data/nyc-weather.csv") // Load and parse weather data.
+    .parseCSV()
+    .parseInts(["Year", "Month", "Day"])
+    .where(row => row.Year >= 2013) // Filter out all records before 2013.
+    .parseFloats("Precipitation")
+    .generateSeries({
+        Date: row => new Date(row.Year, row.Month-1, row.Day), // Generate a data from year, month and day columns.
     })
-    .withSeries({
-        TempNYC: nycWeather
-            .setIndex("Year")
-            .getSeries("AvgTemp")
-    });
+    .setIndex("Date"); // Index by date so that we can merge our data.
 
-const outputChartFile = "output/standardised-yearly-comparision.png";
-renderLineChart(combinedWeather, ["Year", "Year"], ["TempLA", "TempNYC"], outputChartFile) // Render the chart so we can compare standardized data series.
-    .catch(err => {
-        console.error(err);
-    });
+const umbrellaSalesData = dataForge.readFileSync("./data/nyc-umbrella-sales.csv") // Load and parse umbrella sales data.
+    .parseCSV()
+    .parseDates("Date", "DD/MM/YYYY")
+    .parseFloats("Sales")
+    .setIndex("Date"); // Index by date so that we can merge our data.
+    
+dataFrame = dataFrame
+    .withSeries("UmbrellaSales", umbrellaSalesData.getSeries("Sales")) // Merge umbrella sales into the dataframe. This ensures that our dates line up.
+    .where(row => row.Precipitation !== undefined 
+        && row.UmbrellaSales !== undefined); // Drop rows with missing values. Rows in the CSV file may not line up.
+    
+
+const x = dataFrame.getSeries("Precipitation").toArray(); // Extract x values for the correlation coefficient.
+const y = dataFrame.getSeries("UmbrellaSales").toArray(); // Extract y values for the correlation coefficient.
+const correlationCoefficient = simpleStatistics.sampleCorrelation(x, y); // Compute  the correlation coefficient.
+console.log(correlationCoefficient); // Print to console to see the result.

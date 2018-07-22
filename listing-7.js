@@ -18,9 +18,9 @@ const dataFrame = dataForge
     .select(group => { // For each month group generate a new record that summarizes the month.
         return {
             Month: group.first().Month,
-            MinTemp: group.select(row => row.MinTemp).min(), // Extract 'MinTemp' values for the month and get the minimum.
-            MaxTemp: group.select(row => row.MaxTemp).max(), // Extract 'MaxTemp' values for the month and get the maximum.
-            AvgTemp: average(group.select(row => row.AvgTemp).toArray()) // Compute the average temperature for the month.
+            MinTemp: group.deflate(row => row.MinTemp).min(), // Extract 'MinTemp' values for the month and get the minimum.
+            MaxTemp: group.deflate(row => row.MaxTemp).max(), // Extract 'MaxTemp' values for the month and get the maximum.
+            AvgTemp: average(group.deflate(row => row.AvgTemp).toArray()) // Compute the average temperature for the month.
         };
     })
     .inflate(); // Convert back to a DataFrame, because groupBy returns a series.

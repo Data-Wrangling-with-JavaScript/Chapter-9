@@ -12,15 +12,7 @@ function createDistribution (series, chartFileName) {
         .deflate(r => r.Mid) // Extract the mid-point of each bin to a new series.
         .detectValues() // Determine the frequency of values in the new series.
         .orderBy(row => row.Value); // Order by ascending bin value, this is the correct order for rendering the histogram.
-    //console.log(frequencyTable.toString()); // Print to console so we can double check.
-
-    frequencyTable // Output to CSV file so we can double check.
-        .transformSeries({
-            Value: v => v.toFixed(2),
-            Frequency: v => v.toFixed(2),
-        })
-        .asCSV()
-        .writeFileSync("./output/frequency-table.csv");
+    console.log(frequencyTable.toString()); // Print to console so we can double check.
 
     const categories = frequencyTable
         .deflate(r => r.Value.toFixed(2)) // Format x axis labels for display in the histogram.
