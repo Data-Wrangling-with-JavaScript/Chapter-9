@@ -21,7 +21,7 @@
     "c3-chart-maker": "0.1.15",
     "chai": "4.1.2",
     "data-forge": "1.2.3",
-    "papaparse": "4.3.6",
+    "papaparse": "5.2.0",
     "simple-statistics": "5.2.1"
   }
 }
